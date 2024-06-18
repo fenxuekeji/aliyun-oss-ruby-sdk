@@ -406,6 +406,18 @@ module Aliyun
         @protocol.copy_object(name, source, dest, args)
       end
 
+      def get_object_tagging(object_name)
+        @protocol.get_object_tagging(name, object_name)
+      end
+
+      def put_object_tagging(object_name, tagging)
+        @protocol.put_object_tagging(name, object_name, tagging)
+      end
+
+      def delete_object_tagging(object_name)
+        @protocol.delete_object_tagging(name, object_name)
+      end
+
       # 删除一个object
       # @param key [String] Object的名字
       def delete_object(key)

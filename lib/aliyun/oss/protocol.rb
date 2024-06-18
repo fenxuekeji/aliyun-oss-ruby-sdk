@@ -1019,6 +1019,76 @@ module Aliyun
         copy_result
       end
 
+
+      def get_object_tagging(bucket_name, object_name)
+        logger.info("Begin get object tagging, "\
+                    "bucket_name: #{bucket_name}, object_name: #{object_name}")
+        sub_res = {tagging: nil}
+
+        r = @http.get(
+          {:bucket => bucket_name, :object => object_name, sub_res: sub_res},
+          )
+
+        doc = parse_xml(r.body)
+
+        tagging = {}
+        doc.css("Tagging").css('TagSet').css('Tag').each do |element|
+          items = element.elements
+          key,value=nil
+          items.each do |item|
+            if item.elements.empty?
+              case item.name
+              when 'Key'
+                key = item.text
+              when 'Value'
+                value = item.text
+              end
+            else
+            end
+          end
+          tagging.merge!({"#{key}": value}) if key.present?
+        end
+        logger.info("Done get object tagging")
+        tagging
+      end
+
+      def put_object_tagging(bucket_name, object_name, tagging={})
+        logger.info("Begin put object tagging, "\
+                    "bucket_name: #{bucket_name}, object_name: #{object_name}, tagging: #{tagging}")
+        sub_res = {tagging: nil}
+        body = Nokogiri::XML::Builder.new do |xml|
+          xml.Tagging {
+            xml.TagSet {
+              tagging.each do |key, value|
+                xml.Tag {
+                  xml.Key key
+                  xml.Value value
+                }
+              end
+            }
+          }
+        end.to_xml
+
+        result = @http.put(
+          {:bucket => bucket_name, :object => object_name, sub_res: sub_res},
+          {:body => body})
+
+        logger.info("Done put object tagging")
+        result
+      end
+
+      def delete_object_tagging(bucket_name, object_name)
+        logger.info("Begin delete object tagging, "\
+                    "bucket_name: #{bucket_name}, object_name: #{object_name}")
+        sub_res = {tagging: nil}
+
+        r = @http.delete(
+          {:bucket => bucket_name, :object => object_name, sub_res: sub_res},
+          )
+        logger.info("Done delete object tagging")
+        r
+      end
+
       # Delete an object from the bucket
       # @param bucket_name [String] the bucket name
       # @param object_name [String] the object name
